@@ -17,10 +17,14 @@ Users can search by selecting a province and setting a range of dates.
 ## Tech Stack
 
 **Frameworks**: Next.js
-**Language/Library**: React + TypeScript
+
+**Language/Library**: React + TypeScript 
+
 **Forms**: React Hook Form  
+
 **Validation**: Zod 
-**Styling**: Tailwind CSS, DaisyUI
+
+**Styling**: Tailwind CSS, DaisyUI 
 
 ## Getting Started
 
