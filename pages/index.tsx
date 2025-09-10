@@ -30,6 +30,7 @@ type FormValues = z.infer<typeof Schema>;
 export default function Home() {
   const [province, setProvince] = useState({ label: "", code: "" });
   const [list, setList] = useState([{ date: "", name: "" }]);
+  const [message, setMessage] = useState("Please search above to list holidays here.");
 
   const { register, handleSubmit, control, setValue, formState: { errors } } =
     useForm<FormValues>({
@@ -63,6 +64,7 @@ export default function Home() {
       setList(json);
     } catch (error: any) {
       console.log("Error!");
+      setMessage("Out of the range. Please try with a different range.");
     }
   }
 
@@ -151,7 +153,7 @@ export default function Home() {
         {/* Display area here */}
         <div className="mx-auto max-w-xl py-6 space-y-4 h-[60vh]">
           <div className="card bg-base-200 p-4 text-center min-h-full h-full overflow-y-auto">
-            {list.length ?
+            {list.length > 0 && list[0]?.name !== "" ?
               (
                 <ul>
                   {list.map((item, index) => {
@@ -161,7 +163,7 @@ export default function Home() {
                   })}
                 </ul>
               )
-              : <p>No holidays found</p>}
+              : <p>{message}</p>}
           </div>
         </div>
       </main>
