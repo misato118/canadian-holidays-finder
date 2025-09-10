@@ -14,7 +14,7 @@ This is a Canadian holiday search platform designed to find public holidays in C
 
 Users can search by selecting a province and setting a range of dates.
 
-![Example](docs\images\main.png)
+![Example](docs/images/main.png)
 
 ## Tech Stack
 
