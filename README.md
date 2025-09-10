@@ -1,4 +1,4 @@
-# Canadian Holiday Founder App (React)
+# Canadian Holiday Finder App (React)
 
 A simple React application that allows users to search holidays in Canada.
 
