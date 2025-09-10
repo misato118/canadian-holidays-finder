@@ -28,7 +28,16 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
                     const compDate = new Date(holiday.date);
                     return start <= compDate && compDate <= end;
                 }))
-                .map((holiday: any) => ({ date: holiday.date, name: holiday.nameEn }))
+                .map((holiday: any) => ({ date: holiday.date, name: holiday.nameEn }));
+    
+    // { 2022: [{date: ..., name: ...}, {date: ..., name: ...}, ...], 2024: [...], ... }
+    const years = [...new Set(result.map(holiday => holiday.date.substring(0, 4)))];
+    const byYears = Object.fromEntries(
+      years.map((year) => [
+        year, result.filter((h) => h.date.startsWith(year))
+      ])
+    );
+    // console.log("server", JSON.stringify(byYears));
 
-    res.status(200).json(result);
+    res.status(200).json(byYears);
 }

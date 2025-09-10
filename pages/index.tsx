@@ -1,21 +1,9 @@
-import { Geist, Geist_Mono } from "next/font/google";
 import { provinces, provinceCodes } from "../constants/provinces";
+import { searchSteps } from "@/constants/messages";
 import { useEffect, useState } from "react";
 import { z } from "zod";
-import { useRouter } from "next/router";
 import { useForm, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-// import handler from "./api/holidays";
-
-const geistSans = Geist({
-  variable: "--font-geist-sans",
-  subsets: ["latin"],
-});
-
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
-});
 
 const Schema = z.object({
   province: z.enum(provinceCodes, { error: "Choose a province." }),
@@ -27,15 +15,19 @@ const Schema = z.object({
 });
 type FormValues = z.infer<typeof Schema>;
 
+type Holiday = { date: string, name: string }
+type ListByYear = Record<string, Holiday[]>;
+
 export default function Home() {
   const [province, setProvince] = useState({ label: "", code: "" });
-  const [list, setList] = useState([{ date: "", name: "" }]);
-  const [message, setMessage] = useState("Please search above to list holidays here.");
+  const [listByYear, setListByYear] = useState<ListByYear>({});
+  const [message, setMessage] = useState("");
 
   const { register, handleSubmit, control, setValue, formState: { errors } } =
     useForm<FormValues>({
       resolver: zodResolver(Schema),
-      mode: "onChange",
+      mode: "onSubmit",
+      reValidateMode: "onChange",
       defaultValues: { province: "", startDate: undefined, endDate: undefined },
     });
 
@@ -43,8 +35,17 @@ export default function Home() {
   const endDate = useWatch({ control, name: "endDate" });
 
   useEffect(() => {
-    setValue("province", province.code, { shouldValidate: true });
+    setValue("province", province.code);
   }, [province.code, setValue])
+
+  const dateFormat = (oldFormat: string) => {
+    return new Date(`${oldFormat}T00:00:00Z`).toLocaleDateString("en-CA", {
+      month: "long",
+      day: "numeric",
+      timeZone: "UTC"
+    }
+    );
+  }
 
   const handleClick = (label: string, code: string) => {
     const elem = document.activeElement;
@@ -61,7 +62,11 @@ export default function Home() {
       const res = await fetch(url, { cache: "no-store" });
       if (!res.ok) throw new Error(`Request failed: HTTP ${res.status}`);
       const json = await res.json();
-      setList(json);
+      // setList(json);
+      setListByYear(json);
+      if (Object.entries(json).length < 1) {
+        setMessage("No holidays found.");
+      }
     } catch (error: any) {
       console.log("Error!");
       setMessage("Out of the range. Please try with a different range.");
@@ -96,18 +101,14 @@ export default function Home() {
               <input
                 type="date"
                 className="px-2 py-1 border-1 border-solid rounded-lg cursor-pointer"
-                // value={startDate}
                 {...register("startDate", { valueAsDate: true })}
-              // onChange={e => setStartDate(e.target.value)}
               />
             </div>
             <div className="flex items-center">
               <input
                 type="date"
                 className="px-2 py-1 border-1 border-solid rounded-lg cursor-pointer"
-                // value={changeFormat(endDate)}
                 {...register("endDate", { valueAsDate: true })}
-              // onChange={e => setEndDate(e.target.value)} 
               />
             </div>
 
@@ -136,8 +137,12 @@ export default function Home() {
             <div className="col-span-2">
               <p className="text-error text-sm mt-1 h-5">
                 {errors.province?.message ?? "\u00A0"}
-              </p></div>
+              </p>
+            </div>
             <div>
+              <p className="text-error text-sm mt-1 h-5">
+                {errors.startDate?.message ?? "\u00A0"}
+              </p>
             </div>
             <div>
               <p className="text-error text-sm mt-1 h-5">
@@ -152,18 +157,44 @@ export default function Home() {
       <main className="flex-1 overflow-hidden px-4">
         {/* Display area here */}
         <div className="mx-auto max-w-xl py-6 space-y-4 h-[60vh]">
-          <div className="card bg-base-200 p-4 text-center min-h-full h-full overflow-y-auto">
-            {list.length > 0 && list[0]?.name !== "" ?
+          <div className="card bg-base-200 p-4 min-h-full h-full overflow-y-auto">
+            {/* Show the list here */}
+            {Object.keys(listByYear).length > 0 ?
               (
-                <ul>
-                  {list.map((item, index) => {
+                <div className="w-1/2 mx-auto">
+                  {Object.entries(listByYear).map(([year, holidays]) => {
                     return (
-                      <li key={item.name + index}>{item.date} {item.name}</li>
+                      <section key={year}>
+                      <h3 className="my-3 font-semibold text-left bg-stone-900 py-1 px-3 border-solid rounded-xl ">{year}</h3>
+                      <ul className="w-1/2 mx-auto flex flex-wrap justify-center gap-2">
+                        {holidays.map((holiday, index) => (
+                          <li key={`${holiday}+${index}`} className="inline-flex items-center gap-2 whitespace-nowrap badge badge-outline badge-primary mb-2">
+                            {dateFormat(holiday.date)} - {holiday.name}
+                          </li>
+                        ))}
+                      </ul>
+                    </section>
                     );
                   })}
-                </ul>
+                </div>
               )
-              : <p>{message}</p>}
+              : message === "" ?
+              // Show the steps to search here
+              (
+                <ul className="mx-auto">
+                  {searchSteps.map((step: string, index: number) => {
+                    return (
+                      <li key={step + index} className="my-2 text-center">{step}</li>
+                    );
+                  })}
+                </ul>            
+              )
+              :
+              // Show a message if no result is found
+              (
+                <p className="text-center">{message}</p>
+              )
+              }
           </div>
         </div>
       </main>
